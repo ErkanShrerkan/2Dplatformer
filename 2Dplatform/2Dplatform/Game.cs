@@ -10,7 +10,8 @@ namespace _2Dplatform
     {
         Map map;
         List<Character> characters = new List<Character>();
-        public double delta;
+        float gravity = 30;
+        public double deltaT;
         double time1;
         double time2;
 
@@ -18,6 +19,7 @@ namespace _2Dplatform
         {
             map = new Map();
             Character player = new Player();
+            new Task(() => { CharacterController(); }).Start();
             characters.Add(player);
 
             Start();
@@ -34,10 +36,10 @@ namespace _2Dplatform
             while (true)
             {
                 time1 = (new TimeSpan(DateTime.Now.Ticks)).TotalMilliseconds;
-                delta = time1 - time2;
+                deltaT = time1 - time2;
                 time2 = time1;
 
-                string fps = (1 / (delta / 1000)).ToString("0.0");
+                string fps = (1 / (deltaT / 1000)).ToString("0.0");
 
                 Console.SetCursorPosition(0, 16);
                 Console.WriteLine(fps + " fps");
@@ -77,22 +79,25 @@ namespace _2Dplatform
 
             var tiles = GetMapAsArray();
 
-            for (int i = 0; i < tiles.Length; i++)
+            for (int y = 0; y < map.height; y++)
             {
-                switch (tiles[i])
+                for (int x = 0; x < map.width; x++)
                 {
-                    case '.':
-                        Console.Write(" ");
-                        Console.BackgroundColor = ConsoleColor.Blue;
-                        break;
-                    case '#':
-                        Console.Write(" ");
-                        Console.BackgroundColor = ConsoleColor.Green;
-                        break;
-                    case '¤':
-                        Console.Write(" ");
-                        Console.BackgroundColor = ConsoleColor.White;
-                        break;
+                    switch (tiles[x, y])
+                    {
+                        case '.':
+                            Console.Write(" ");
+                            Console.BackgroundColor = ConsoleColor.Blue;
+                            break;
+                        case '#':
+                            Console.Write(" ");
+                            Console.BackgroundColor = ConsoleColor.Green;
+                            break;
+                        case '¤':
+                            Console.Write(" ");
+                            Console.BackgroundColor = ConsoleColor.White;
+                            break;
+                    }
                 }
             }
             Console.ResetColor();
@@ -109,10 +114,82 @@ namespace _2Dplatform
             }*/
         }
 
-        char[] GetMapAsArray()
+        char[,] GetMapAsArray()
         {
             char[] mapArray = map.level.ToCharArray();
-            return mapArray;
+
+            char[,] fullMapArray = new char[map.width, map.height];
+
+            for (int y = 0; y < map.height; y++)
+            {
+                for (int x = 0; x < map.width; x++)
+                {
+                    fullMapArray[x, y] = mapArray[(64*y)+x];
+                }
+            }
+            return fullMapArray;
+        }
+
+        private void CharacterController()
+        {
+            while (true)
+            {
+                Fall();
+                if (Console.ReadKey(true).Key == ConsoleKey.D)
+                {
+                    WalkRight();
+                }
+                if (Console.ReadKey(true).Key == ConsoleKey.A)
+                {
+                    WalkLeft();
+                }
+            }
+        }
+
+        void Fall()
+        {
+            characters[0].position[1] += gravity * (float)deltaT / 1000;
+            characters[0].position[1] = CheckValidPosition(characters[0].position[1], "y");
+        }
+
+        void WalkLeft()
+        {
+            characters[0].position[0] -= characters[0].GetSpeed() * (float)deltaT/1000;
+            characters[0].position[0] = CheckValidPosition(characters[0].position[0], "x");
+        }
+
+        void WalkRight()
+        {
+            characters[0].position[0] += characters[0].GetSpeed() * (float)deltaT/1000;
+            characters[0].position[0] = CheckValidPosition(characters[0].position[0], "x");
+        }
+
+        float CheckValidPosition(float f, string xy)
+        {
+            if (f < 0)
+            {
+                f = 0;
+                return f;
+            }
+            if (xy == "x")
+            {
+                if (f > 64)
+                {
+                    f = 64;
+                    return f;
+                }
+                else return f;
+            }
+            if (xy == "y")
+            {
+                if (f > 16)
+                {
+                    f = 16;
+                    return f;
+                }
+                else return f;
+            }
+            else return 0;
         }
     }
 }

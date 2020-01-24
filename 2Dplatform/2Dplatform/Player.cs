@@ -8,50 +8,13 @@ namespace _2Dplatform
 {
     class Player : Character
     {
-        delegate void DoThing();
-
-        void WalkLeft()
-        {
-            //position[0] - speed * Game.delta
-        }
-
-        void WalkRight()
-        {
-
-        }
-
         public Player()
         {
-
             name = "Player";
             position = new float[] { 5, 14 };
-            new Task(() => { CharacterController(); }).Start();
         }
 
-        private void CharacterController()
-        {
-            while (true)
-            {
-                if (Console.ReadKey().Key == ConsoleKey.RightArrow)
-                {
-                    WalkRight();
-                }
-                if (Console.ReadKey().Key == ConsoleKey.LeftArrow)
-                {
-                    WalkLeft();
-                }
-            }
-        }
-
-        float CheckValidPosition(float x)
-        {
-            if (x < 0)
-            {
-                x = 0;
-                return x;
-            }
-            else return x;
-        }
+        
 
         /*public async Task MyMethodAsync()
         {

@@ -9,7 +9,7 @@ namespace _2Dplatform
     class Character : GameObject
     {
         protected int hp;
-        protected float speed = 5.0f;
+        protected float speed = 10.0f;
         public float[] position = new float[2];
 
         public Character()
@@ -17,6 +17,11 @@ namespace _2Dplatform
             collision = true;
             sprite = "X";
             layer = 0;
+        }
+
+        public float GetSpeed()
+        {
+            return speed;
         }
     }
 }
