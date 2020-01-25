@@ -9,8 +9,8 @@ namespace _2Dplatform
     class Character : GameObject
     {
         protected int hp;
-        protected float speed = 10.0f;
-        public float[] position = new float[2];
+        protected float speed = 5.0f;
+        protected float[] position = new float[2];
 
         public Character()
         {
@@ -22,6 +22,12 @@ namespace _2Dplatform
         public float GetSpeed()
         {
             return speed;
+        }
+
+        public float[] Pos  // property
+        {
+            get { return position; }   // get method
+            set { position = value; }   // set method
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace _2Dplatform
@@ -10,17 +11,16 @@ namespace _2Dplatform
     {
         Map map;
         List<Character> characters = new List<Character>();
-        float gravity = 30;
+        float gravity = 10;
         public double deltaT;
         double time1;
         double time2;
+        string fps;
+        char[,] fullMapArray;
 
         public Game()
         {
-            map = new Map();
-            Character player = new Player();
-            new Task(() => { CharacterController(); }).Start();
-            characters.Add(player);
+            GameSetup();
 
             Start();
             Update();
@@ -39,15 +39,14 @@ namespace _2Dplatform
                 deltaT = time1 - time2;
                 time2 = time1;
 
-                string fps = (1 / (deltaT / 1000)).ToString("0.0");
+                fps = (1 / (deltaT / 1000)).ToString("0.0");
 
                 Console.SetCursorPosition(0, 16);
                 Console.WriteLine(fps + " fps");
 
-                Console.CursorVisible = false;
-
                 DrawMap();
                 DrawCharacters();
+                Fall();
             }
         }
 
@@ -55,9 +54,13 @@ namespace _2Dplatform
         {
             for (int i = 0; i < characters.Count; i++)
             {
-                int roundedPosX = (int)characters[i].position[0];
-                int roundedPosY = (int)characters[i].position[1];
-                Console.SetCursorPosition(roundedPosX, roundedPosY);
+                int roundedPosX = (int)characters[i].Pos[0];
+                int roundedPosY = (int)characters[i].Pos[1];
+
+                //Console.WriteLine(roundedPosX + " "+ roundedPosY+ "                          ");
+                //Console.ReadLine();
+
+                Console.SetCursorPosition(CheckValidPosition(roundedPosX, "x"), CheckValidPosition(roundedPosY, "y"));
 
                 if (characters[i].name == "Player")
                 {
@@ -73,16 +76,36 @@ namespace _2Dplatform
             }
         }
 
+        int CheckCollision(int xy, string axis)
+        {
+            for (int i = 0; i < characters.Count; i++)
+            {
+                switch (fullMapArray[(int)characters[i].Pos[0], (int)characters[i].Pos[1]])
+                {
+                    case '.':
+                        break;
+                    case '#':
+                        // kolla vilka tiles som ligger runt spelaren
+                        break;
+                    case '¤':
+                        break;
+                }
+            }
+
+            return 1;
+        }
+
         void DrawMap()
         {
-            Console.SetCursorPosition(0, 0);
-
             var tiles = GetMapAsArray();
+            Console.SetCursorPosition(0, 0);
 
             for (int y = 0; y < map.height; y++)
             {
                 for (int x = 0; x < map.width; x++)
                 {
+                    //Console.SetCursorPosition(x, y);
+
                     switch (tiles[x, y])
                     {
                         case '.':
@@ -101,30 +124,19 @@ namespace _2Dplatform
                 }
             }
             Console.ResetColor();
-
-            /*
-            for (int y = 0; y < map.width; y++)
-            {
-                for (int x = 0; x < map.height; x++)
-                {
-                    
-
-
-                }
-            }*/
         }
 
         char[,] GetMapAsArray()
         {
             char[] mapArray = map.level.ToCharArray();
 
-            char[,] fullMapArray = new char[map.width, map.height];
+            fullMapArray = new char[map.width, map.height];
 
             for (int y = 0; y < map.height; y++)
             {
                 for (int x = 0; x < map.width; x++)
                 {
-                    fullMapArray[x, y] = mapArray[(64*y)+x];
+                    fullMapArray[x, y] = mapArray[(64 * y) + x];
                 }
             }
             return fullMapArray;
@@ -134,60 +146,84 @@ namespace _2Dplatform
         {
             while (true)
             {
-                Fall();
-                if (Console.ReadKey(true).Key == ConsoleKey.D)
+                var key = Console.ReadKey(true);
+
+                if (key.Key == ConsoleKey.RightArrow)
                 {
-                    WalkRight();
+                    Walk(1);
                 }
-                if (Console.ReadKey(true).Key == ConsoleKey.A)
+                if (key.Key == ConsoleKey.LeftArrow)
                 {
-                    WalkLeft();
+                    Walk(-1);
+                }
+                if (key.Key == ConsoleKey.UpArrow)
+                {
+                    Jump();
+                }
+                if (key.Key == ConsoleKey.Escape)
+                {
+                    Environment.Exit(0);
                 }
             }
         }
 
         void Fall()
         {
-            characters[0].position[1] += gravity * (float)deltaT / 1000;
-            characters[0].position[1] = CheckValidPosition(characters[0].position[1], "y");
-        }
-
-        void WalkLeft()
-        {
-            characters[0].position[0] -= characters[0].GetSpeed() * (float)deltaT/1000;
-            characters[0].position[0] = CheckValidPosition(characters[0].position[0], "x");
-        }
-
-        void WalkRight()
-        {
-            characters[0].position[0] += characters[0].GetSpeed() * (float)deltaT/1000;
-            characters[0].position[0] = CheckValidPosition(characters[0].position[0], "x");
-        }
-
-        float CheckValidPosition(float f, string xy)
-        {
-            if (f < 0)
+            if ((int)deltaT < 0)
             {
-                f = 0;
-                return f;
+                deltaT = 0;
             }
-            if (xy == "x")
+
+            for (int i = 0; i < characters.Count; i++)
             {
-                if (f > 64)
-                {
-                    f = 64;
-                    return f;
-                }
-                else return f;
+                characters[i].Pos[1] += gravity * (float)deltaT / 1000;
             }
-            if (xy == "y")
+        }
+
+        void Walk(int direction)
+        {
+            characters[0].Pos[0] += (characters[0].GetSpeed() * (float)deltaT / 1000) * direction;
+        }
+
+        void Jump()
+        {
+            characters[0].Pos[1] -= (characters[0].GetSpeed() * 3 * (float)deltaT / 1000);
+        }
+
+        void GameSetup()
+        {
+            map = new Map();
+            Character player = new Player();
+            new Task(() => { CharacterController(); }).Start();
+            new Task(() => { Fall(); }).Start();
+            Console.CursorVisible = false;
+            characters.Add(player);
+        }
+
+        int CheckValidPosition(int i, string axis)
+        {
+            if (i < 0)
             {
-                if (f > 16)
+                i = 0;
+                return i;
+            }
+            if (axis == "x")
+            {
+                if (i >= map.width)
                 {
-                    f = 16;
-                    return f;
+                    i = map.width - 1;
+                    return i;
                 }
-                else return f;
+                else return i;
+            }
+            if (axis == "y")
+            {
+                if (i >= map.height)
+                {
+                    i = map.height - 1;
+                    return i;
+                }
+                else return i;
             }
             else return 0;
         }

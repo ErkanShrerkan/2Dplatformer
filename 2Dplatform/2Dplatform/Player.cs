@@ -11,7 +11,7 @@ namespace _2Dplatform
         public Player()
         {
             name = "Player";
-            position = new float[] { 5, 14 };
+            Pos = new float[] { 5, 14 };
         }
 
         
